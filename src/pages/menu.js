@@ -1,29 +1,62 @@
-// Menu.js
-import React, { useEffect } from 'react';
+import React, { useState } from 'react';
+import { Card } from 'react-bootstrap';
 import { useNavigate } from 'react-router-dom';
 
-const Menu = () => {
+const MobileMenu = () => {
+  const [cardStates, setCardStates] = useState([
+    { id: 1 , name : "AI and ML", isClicked: false },
+    { id: 2,name : "Data Structure", isClicked: false },
+    // Add more cards as needed
+  ]);
+
   const navigate = useNavigate();
 
-  useEffect(() => {
-    const handleNavigation = (event) => {
-      // Prevent going back
-      event.preventDefault();
-    };
+  const containerStyle = {
+    margin: '20px', // Adjust the margin as needed
+  };
 
-    window.addEventListener('popstate', handleNavigation);
+  const handleCardClick = (cardId) => {
+    setCardStates((prevStates) =>
+      prevStates.map((card) =>
+        card.id === cardId ? { ...card, isClicked: !card.isClicked } : card
+      )
+    );
 
-    return () => {
-      window.removeEventListener('popstate', handleNavigation);
-    };
-  }, []);
+    // Redirect to "/quiz" on card click
+    navigate('/quiz');
+  };
 
   return (
     <div>
-      <h1>Menu Page</h1>
-      {/* Your menu content goes here */}
+      <div className='display-1 text-primary'>
+        <center>Menu</center>
+      </div>
+      <hr/>
+      <div style={containerStyle}>
+        {cardStates.map((card) => (
+          <Card
+            key={card.id}
+            style={{
+              marginBottom: '20px',
+              borderRadius: '10px',
+              boxShadow: '0 4px 8px rgba(0, 0, 0, 0.1)',
+              transition: 'transform 0.3s ease-in-out, background 0.3s ease-in-out, color 0.3s ease-in-out',
+              transform: card.isClicked ? 'scale(1.05)' : 'scale(1)',
+              background: card.isClicked ? '#3498db' : '#fff',
+              color: card.isClicked ? '#fff' : '#333',
+              cursor: 'pointer',
+            }}
+            onClick={() => handleCardClick(card.id)}
+          >
+            <Card.Body>
+              <h5>{`${card.name}`}</h5>
+              {/* <p>{`Description for Option ${card.id}.`}</p> */}
+            </Card.Body>
+          </Card>
+        ))}
+      </div>
     </div>
   );
 };
 
-export default Menu;
+export default MobileMenu;

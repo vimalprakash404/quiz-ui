@@ -1,31 +1,85 @@
 // Quiz.js
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import quizData from './quizData';
-import { Modal, Button } from 'react-bootstrap';
+import { Modal, Button, ProgressBar } from 'react-bootstrap';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import { BsArrowLeft, BsArrowRight } from 'react-icons/bs';
-import { useNavigate } from 'react-router-dom';
+import { FaCheck } from 'react-icons/fa';
 
 const Quiz = () => {
   const [currentQuestion, setCurrentQuestion] = useState(0);
   const [score, setScore] = useState(0);
   const [selectedAnswers, setSelectedAnswers] = useState(new Array(quizData.length).fill(null));
   const [showModal, setShowModal] = useState(false);
+  const [timer, setTimer] = useState(10); // 10 minutes (600 seconds)
+  const [quizStartTime, setQuizStartTime] = useState(null);
+  const [quizEndTime, setQuizEndTime] = useState(null);
 
   const isLastQuestion = currentQuestion === quizData.length - 1;
-  const navigate = useNavigate();
+
+  useEffect(() => {
+    // Update the timer every second
+    const interval = setInterval(() => {
+      setTimer((prevTimer) => (prevTimer > 0 ? prevTimer - 1 : 0));
+    }, 1000);
+
+    // Capture the quiz start time
+    if (!quizStartTime) {
+      setQuizStartTime(new Date());
+    }
+
+    // Automatically submit the quiz when the timer reaches zero
+    if (timer === 0) {
+      handleNextOrSubmit();
+    }
+
+    // Cleanup the interval on component unmount
+    return () => {
+      clearInterval(interval);
+      // Capture the quiz end time when the component unmounts
+      if (!quizEndTime) {
+        setQuizEndTime(new Date());
+      }
+    };
+  }, [timer, quizStartTime, quizEndTime]);
+
+  const formatTime = (timeInSeconds) => {
+    const minutes = Math.floor(timeInSeconds / 60);
+    const seconds = timeInSeconds % 60;
+    return `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+  };
+
+  const calculateProgress = () => {
+    return (timer / 10) * 100; // Assuming 600 seconds as the total time
+  };
+
+  const getProgressBarVariant = () => {
+    const percentage = calculateProgress();
+    if (percentage >= 70) {
+      return 'success';
+    } else if (percentage >= 40) {
+      return 'warning';
+    } else {
+      return 'danger';
+    }
+  };
 
   const handleNextOrSubmit = () => {
-    if (isLastQuestion) {
-      // Submit the answer and show the modal
-      const isCorrect = quizData[currentQuestion].answers.some(
-        (answer) => answer.option === selectedAnswers[currentQuestion] && answer.isCorrect
-      );
+    // Capture the quiz end time when submitting the quiz
+    if (!quizEndTime) {
+      setQuizEndTime(new Date());
+    }
 
-      if (isCorrect) {
-        setScore(score + 1);
-      }
+    if (isLastQuestion || timer === 0) {
+      // Calculate the score for all questions
+      const newScore = quizData.reduce((totalScore, question, index) => {
+        const isCorrect = question.answers.some(
+          (answer) => answer.option === selectedAnswers[index] && answer.isCorrect
+        );
+        return isCorrect ? totalScore + 1 : totalScore;
+      }, 0);
 
+      setScore(newScore);
       setShowModal(true);
     } else {
       // Move to the next question
@@ -60,11 +114,29 @@ const Quiz = () => {
   const handleClose = () => {
     setShowModal(false);
     // Redirect to /menu
-    navigate('/menu');
+    // history.push('/menu'); // If you're using useHistory, uncomment this line
+
+    // Log the quiz duration
+    if (quizStartTime && quizEndTime) {
+      const durationInSeconds = (quizEndTime - quizStartTime) / 1000;
+      console.log(`Quiz duration: ${durationInSeconds} seconds`);
+    }
   };
 
   return (
     <div className="container mt-5">
+      {/* Timer Display */}
+      <div className="mt-3">
+        <center>
+        <p className='display-3 text-primary'> {formatTime(timer)}</p>
+        </center>
+        <ProgressBar
+          variant={getProgressBarVariant()}
+          now={calculateProgress()}
+          
+        />
+      </div>
+      <hr/>
       <h1 className="mb-4">{quizData[currentQuestion].question}</h1>
       <div className="d-flex flex-column">
         {quizData[currentQuestion].answers.map((answer, index) => (
@@ -79,14 +151,26 @@ const Quiz = () => {
         ))}
       </div>
 
+      
+
       {/* Next/Submit and Previous Buttons */}
       <div className="mt-3">
-        <Button variant="secondary" className="mr-2" onClick={handlePrevious}>
-          <BsArrowLeft className="mr-1" /> Previous
-        </Button>
-        <span className="mr-2"></span>
+        {currentQuestion > 0 && (
+          <Button variant="secondary" className="mr-2" onClick={handlePrevious}>
+            <BsArrowLeft className="mr-1" /> Previous
+          </Button>
+        )}
+        <span className="mr-2">  </span>
         <Button variant="primary" onClick={handleNextOrSubmit}>
-          {isLastQuestion ? 'Submit' : 'Next'} <BsArrowRight className="ml-1" />
+          {isLastQuestion ? (
+            <>
+              Submit <FaCheck className="ml-1" />
+            </>
+          ) : (
+            <>
+              Next <BsArrowRight className="ml-1" />
+            </>
+          )}
         </Button>
       </div>
 
