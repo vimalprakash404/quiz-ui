@@ -1,6 +1,9 @@
-import React, { useState } from 'react';
+import React, { useState , useEffect} from 'react';
 import { Card } from 'react-bootstrap';
 import { useNavigate } from 'react-router-dom';
+import domain from '../domian';
+import axios  from 'axios';
+
 
 const MobileMenu = () => {
   const [cardStates, setCardStates] = useState([
@@ -8,6 +11,32 @@ const MobileMenu = () => {
     { id: 2,name : "Data Structure", isClicked: false },
     // Add more cards as needed
   ]);
+  const [responceData, setResponceData] = useState([]);
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        // Make API call using Axios
+        const demo_ob =domain();
+        const response = await axios.get(demo_ob.concat('/quiz/all'));
+  
+        // Update the state with the fetched data
+        setResponceData(response.data);
+        const data =[];
+        response.data.forEach((object, index) => {
+          data.push({id : object.id , name : object.name , isClicked: false, question : object.questions})
+        });
+        setCardStates(data);
+
+      } catch (error) {
+        console.error('Error fetching data:', error);
+        alert(error);
+      } 
+  }
+  
+  fetchData();
+  },[responceData]);
+  
+  
 
   const navigate = useNavigate();
 
@@ -15,7 +44,7 @@ const MobileMenu = () => {
     margin: '20px', // Adjust the margin as needed
   };
 
-  const handleCardClick = (cardId) => {
+  const handleCardClick = (cardId , question) => {
     setCardStates((prevStates) =>
       prevStates.map((card) =>
         card.id === cardId ? { ...card, isClicked: !card.isClicked } : card
@@ -23,7 +52,8 @@ const MobileMenu = () => {
     );
 
     // Redirect to "/quiz" on card click
-    navigate('/quiz');
+    // console.log(question);
+    navigate('/quiz', {state:{question : question }});
   };
 
   return (
@@ -46,7 +76,7 @@ const MobileMenu = () => {
               color: card.isClicked ? '#fff' : '#333',
               cursor: 'pointer',
             }}
-            onClick={() => handleCardClick(card.id)}
+            onClick={() => handleCardClick(card.id, card.question)}
           >
             <Card.Body>
               <h5>{`${card.name}`}</h5>

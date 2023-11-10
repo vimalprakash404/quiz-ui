@@ -1,17 +1,18 @@
 // Quiz.js
-import React, { useState, useEffect } from 'react';
-import quizData from './quizData';
+import React, { useState, useEffect , } from 'react';
+import PropTypes from 'prop-types';
 import { Modal, Button, ProgressBar } from 'react-bootstrap';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import { BsArrowLeft, BsArrowRight } from 'react-icons/bs';
 import { FaCheck } from 'react-icons/fa';
+import { useNavigate } from 'react-router-dom';
 
-const Quiz = () => {
+const Quiz = ({ quizData }) => {
   const [currentQuestion, setCurrentQuestion] = useState(0);
   const [score, setScore] = useState(0);
   const [selectedAnswers, setSelectedAnswers] = useState(new Array(quizData.length).fill(null));
   const [showModal, setShowModal] = useState(false);
-  const [timer, setTimer] = useState(10); // 10 minutes (600 seconds)
+  const [timer, setTimer] = useState(600); // 10 minutes (600 seconds)
   const [quizStartTime, setQuizStartTime] = useState(null);
   const [quizEndTime, setQuizEndTime] = useState(null);
 
@@ -50,7 +51,7 @@ const Quiz = () => {
   };
 
   const calculateProgress = () => {
-    return (timer / 10) * 100; // Assuming 600 seconds as the total time
+    return (timer / 600) * 100; // Assuming 600 seconds as the total time
   };
 
   const getProgressBarVariant = () => {
@@ -74,7 +75,7 @@ const Quiz = () => {
       // Calculate the score for all questions
       const newScore = quizData.reduce((totalScore, question, index) => {
         const isCorrect = question.answers.some(
-          (answer) => answer.option === selectedAnswers[index] && answer.isCorrect
+          (answer) => answer.text === selectedAnswers[index] && answer.isCorrect
         );
         return isCorrect ? totalScore + 1 : totalScore;
       }, 0);
@@ -103,19 +104,19 @@ const Quiz = () => {
     }
   };
 
-  const handleAnswerChange = (option) => {
+  const handleAnswerChange = (text) => {
     setSelectedAnswers((prevSelectedAnswers) => {
       const updatedSelectedAnswers = [...prevSelectedAnswers];
-      updatedSelectedAnswers[currentQuestion] = option;
+      updatedSelectedAnswers[currentQuestion] = text;
       return updatedSelectedAnswers;
     });
   };
-
+const navigate= useNavigate();
   const handleClose = () => {
     setShowModal(false);
     // Redirect to /menu
     // history.push('/menu'); // If you're using useHistory, uncomment this line
-
+      navigate("/rank")
     // Log the quiz duration
     if (quizStartTime && quizEndTime) {
       const durationInSeconds = (quizEndTime - quizStartTime) / 1000;
@@ -125,7 +126,6 @@ const Quiz = () => {
 
   return (
     <div className="container mt-5">
-      {/* Timer Display */}
       <div className="mt-3">
         <center>
         <p className='display-3 text-primary'> {formatTime(timer)}</p>
@@ -142,16 +142,24 @@ const Quiz = () => {
         {quizData[currentQuestion].answers.map((answer, index) => (
           <Button
             key={index}
-            variant={selectedAnswers[currentQuestion] === answer.option ? 'primary' : 'outline-primary'}
+            variant={selectedAnswers[currentQuestion] === answer.text ? 'primary' : 'outline-primary'}
             className="mb-2"
-            onClick={() => handleAnswerChange(answer.option)}
+            onClick={() => handleAnswerChange(answer.text)}
           >
-            {answer.option}
+            {answer.text}
           </Button>
         ))}
       </div>
 
-      
+      {/* Timer Display */}
+      {/* <div className="mt-3">
+        <p>Time Left: {formatTime(timer)}</p>
+        <ProgressBar
+          variant={getProgressBarVariant()}
+          now={calculateProgress()}
+          label={`${formatTime(timer)}`}
+        />
+      </div> */}
 
       {/* Next/Submit and Previous Buttons */}
       <div className="mt-3">
@@ -160,7 +168,7 @@ const Quiz = () => {
             <BsArrowLeft className="mr-1" /> Previous
           </Button>
         )}
-        <span className="mr-2">  </span>
+        <span className="mr-2"></span>
         <Button variant="primary" onClick={handleNextOrSubmit}>
           {isLastQuestion ? (
             <>
@@ -190,6 +198,10 @@ const Quiz = () => {
       </Modal>
     </div>
   );
+};
+
+Quiz.propTypes = {
+  quizData: PropTypes.array.isRequired,
 };
 
 export default Quiz;
