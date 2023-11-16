@@ -1,25 +1,31 @@
 // Quiz.js
-import React, { useState, useEffect , } from 'react';
+import React, { useState, useEffect, } from 'react';
 import PropTypes from 'prop-types';
 import { Modal, Button, ProgressBar } from 'react-bootstrap';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import { BsArrowLeft, BsArrowRight } from 'react-icons/bs';
 import { FaCheck } from 'react-icons/fa';
 import { useNavigate } from 'react-router-dom';
+import axios  from 'axios';
+import domain from '../domian';
+// import "./style.css";
 
-const Quiz = ({ quizData }) => {
+const Quiz = ({ quizData , questionId}) => {
+  // const token = localStorage.getItem("token")
   const [currentQuestion, setCurrentQuestion] = useState(0);
   const [score, setScore] = useState(0);
   const [selectedAnswers, setSelectedAnswers] = useState(new Array(quizData.length).fill(null));
   const [showModal, setShowModal] = useState(false);
-  const [timer, setTimer] = useState(600); // 10 minutes (600 seconds)
+  const [timer, setTimer] = useState(60); // 10 minutes (600 seconds)
+  const timeConst = 60;
   const [quizStartTime, setQuizStartTime] = useState(null);
   const [quizEndTime, setQuizEndTime] = useState(null);
-
+  const [submittedanswers, setSubmitedAnswers] = useState([])
   const isLastQuestion = currentQuestion === quizData.length - 1;
 
   useEffect(() => {
     // Update the timer every second
+    console.log(questionId);
     const interval = setInterval(() => {
       setTimer((prevTimer) => (prevTimer > 0 ? prevTimer - 1 : 0));
     }, 1000);
@@ -51,7 +57,7 @@ const Quiz = ({ quizData }) => {
   };
 
   const calculateProgress = () => {
-    return (timer / 600) * 100; // Assuming 600 seconds as the total time
+    return (timer / timeConst) * 100; // Assuming 600 seconds as the total time
   };
 
   const getProgressBarVariant = () => {
@@ -72,12 +78,25 @@ const Quiz = ({ quizData }) => {
     }
 
     if (isLastQuestion || timer === 0) {
+      // Create an array to store correctness information
+      const correctnessArray = quizData.map((question, index) => {
+        if (selectedAnswers[index] === null) {
+          return null; // Answer is skipped
+        } else {
+          const isCorrect = question.answers.some(
+            (answer) =>
+              answer.text === selectedAnswers[index] && answer.isCorrect
+          );
+          return isCorrect ? 1 : 0;
+        }
+      });
+
+      // Log or use the correctnessArray as needed
+      console.log('Correctness Array:', correctnessArray);
+      setSubmitedAnswers(correctnessArray);
       // Calculate the score for all questions
-      const newScore = quizData.reduce((totalScore, question, index) => {
-        const isCorrect = question.answers.some(
-          (answer) => answer.text === selectedAnswers[index] && answer.isCorrect
-        );
-        return isCorrect ? totalScore + 1 : totalScore;
+      const newScore = correctnessArray.reduce((totalScore, correctness) => {
+        return totalScore + (correctness === 1 ? 1 : 0);
       }, 0);
 
       setScore(newScore);
@@ -111,38 +130,95 @@ const Quiz = ({ quizData }) => {
       return updatedSelectedAnswers;
     });
   };
-const navigate= useNavigate();
-  const handleClose = () => {
+  const handleClearSelection = () => {
+    setSelectedAnswers((prevSelectedAnswers) => {
+      const updatedSelectedAnswers = [...prevSelectedAnswers];
+      // Clear the selection
+      updatedSelectedAnswers[currentQuestion] = null;
+      return updatedSelectedAnswers;
+    });
+  };
+  const navigate = useNavigate();
+  const handleClose = async () => {
     setShowModal(false);
     // Redirect to /menu
     // history.push('/menu'); // If you're using useHistory, uncomment this line
-      navigate("/rank")
+
+    navigate("/rank")
     // Log the quiz duration
-    if (quizStartTime && quizEndTime) {
-      const durationInSeconds = (quizEndTime - quizStartTime) / 1000;
-      console.log(`Quiz duration: ${durationInSeconds} seconds`);
+    
+
+    try {
+      let durationInSeconds= 0 ;
+      if (quizStartTime && quizEndTime) {
+         durationInSeconds = (quizEndTime - quizStartTime) / 1000;
+        console.log(`Quiz duration: ${durationInSeconds} seconds`);
+        console.log(selectedAnswers);
+      }
+       // Replace with the actual user ID
+      const quizId = questionId; // Replace with the actual quiz ID
+      // const score = score; // Implement a function to calculate the score
+      const duration = durationInSeconds; // Implement a function to calculate the duration
+
+      const authToken = localStorage.getItem('token'); // Replace with your actual authentication token
+      const answers = submittedanswers;
+      const response = await axios.post(
+        domain()+'/quiz/submit',
+        {
+          quizId,
+          score,
+          duration,
+          answers,
+        },
+        {
+          headers: {
+            'Content-Type': 'application/json',
+            "Authorization": authToken,
+          },
+        }
+      );
+      console.log('Request:', response.config);
+      console.log('Response:', response.data);
+  
+      if (response.status === 200) {
+        console.log('Quiz submitted successfully');
+        // Add any additional logic after successful submission
+      } else {
+        console.log(response);
+        console.error('Failed to submit quiz');
+        console.log('Request:', response.config);
+        console.log('Response:', response.data);
+
+      }
+    } catch (error) {
+      console.error('Error:', error);
     }
   };
+
 
   return (
     <div className="container mt-5">
       <div className="mt-3">
         <center>
-        <p className='display-3 text-primary'> {formatTime(timer)}</p>
+          <p className='display-3 text-primary'> {formatTime(timer)}</p>
         </center>
         <ProgressBar
           variant={getProgressBarVariant()}
           now={calculateProgress()}
-          
+
         />
       </div>
-      <hr/>
+      <hr />
       <h1 className="mb-4">{quizData[currentQuestion].question}</h1>
       <div className="d-flex flex-column">
         {quizData[currentQuestion].answers.map((answer, index) => (
           <Button
             key={index}
-            variant={selectedAnswers[currentQuestion] === answer.text ? 'primary' : 'outline-primary'}
+            variant={
+              selectedAnswers[currentQuestion] === answer.text
+                ? 'primary'
+                : 'outline-primary'
+            }
             className="mb-2"
             onClick={() => handleAnswerChange(answer.text)}
           >
@@ -150,7 +226,11 @@ const navigate= useNavigate();
           </Button>
         ))}
       </div>
-
+      {selectedAnswers[currentQuestion] && ( // Render the button only if an answer is selected
+        <Button variant="secondary" onClick={handleClearSelection} className="mt-2">
+          Clear Selection
+        </Button>
+      )}
       {/* Timer Display */}
       {/* <div className="mt-3">
         <p>Time Left: {formatTime(timer)}</p>
@@ -168,7 +248,7 @@ const navigate= useNavigate();
             <BsArrowLeft className="mr-1" /> Previous
           </Button>
         )}
-        <span className="mr-2"></span>
+        <span className="mr-2">  </span>
         <Button variant="primary" onClick={handleNextOrSubmit}>
           {isLastQuestion ? (
             <>

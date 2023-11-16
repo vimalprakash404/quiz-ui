@@ -10,7 +10,8 @@ const Quiz = ()=>{
         question : object.text,
         answers : object.options });
     });
-    console.log(data);
-    return <QuizCom quizData={data} />;
+    console.log(location.state.id);
+
+    return <QuizCom quizData={data} questionId={location.state.id}/>;
 }
 export default Quiz;

@@ -1,0 +1,14 @@
+/* styles.css */
+.btn-primary:hover,
+.btn-outline-primary:hover {
+  background-color: #007bff; /* Set the background color to the default primary color */
+  border-color: #007bff;
+  color: #fff; /* Set the text color to white */
+}
+
+/* Optionally, you can also remove the hover effect for the secondary button */
+.btn-secondary:hover {
+  background-color: #6c757d; /* Set the background color to the default secondary color */
+  border-color: #6c757d;
+  color: #fff; /* Set the text color to white */
+}

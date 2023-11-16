@@ -6,6 +6,8 @@ import axios  from 'axios';
 
 
 const MobileMenu = () => {
+  const token = localStorage.getItem("token")
+  console.log(token );
   const [cardStates, setCardStates] = useState([
     { id: 1 , name : "AI and ML", isClicked: false },
     { id: 2,name : "Data Structure", isClicked: false },
@@ -23,7 +25,7 @@ const MobileMenu = () => {
         setResponceData(response.data);
         const data =[];
         response.data.forEach((object, index) => {
-          data.push({id : object.id , name : object.name , isClicked: false, question : object.questions})
+          data.push({id : object._id , name : object.name , isClicked: false, question : object.questions})
         });
         setCardStates(data);
 
@@ -34,7 +36,7 @@ const MobileMenu = () => {
   }
   
   fetchData();
-  },[responceData]);
+  },[]);
   
   
 
@@ -45,6 +47,7 @@ const MobileMenu = () => {
   };
 
   const handleCardClick = (cardId , question) => {
+    console.log("cardid" + cardId);
     setCardStates((prevStates) =>
       prevStates.map((card) =>
         card.id === cardId ? { ...card, isClicked: !card.isClicked } : card
@@ -52,10 +55,9 @@ const MobileMenu = () => {
     );
 
     // Redirect to "/quiz" on card click
-    // console.log(question);
-    navigate('/quiz', {state:{question : question }});
+    navigate('/quiz', {state:{question : question , id : cardId }});
   };
-
+console.log(cardStates);
   return (
     <div>
       <div className='display-1 text-primary'>

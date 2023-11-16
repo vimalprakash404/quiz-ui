@@ -1,13 +1,21 @@
 // LoginPage.js
 
-import React, { useState  } from 'react';
+import React, { useState } from 'react';
 import { Container, Card, Form, Button, Alert } from 'react-bootstrap';
+import domain from '../domian';
+import { useNavigate } from 'react-router-dom';
 
 const LoginPage = () => {
+
+  
+    
+  
+  
+ 
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
-
+  const navigate =  useNavigate();
   const handleLogin = (e) => {
     e.preventDefault();
 
@@ -16,13 +24,41 @@ const LoginPage = () => {
       setError('Please enter both email and password.');
       return;
     }
-
+    console.log(email);
+    console.log(password);
+    login_data(email,password)
     // Add your login logic here
     // For demo, let's simulate a login error
-    setError('Invalid email or password. Please try again.');
+   
   };
 
- 
+  const login_data = async (email,password) => {
+    try {
+      const demo_ob =domain();
+      const response = await fetch(demo_ob.concat('/login'), {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ email, password }),
+      });
+
+      if (!response.ok) {
+        
+        setError('Invalid email or password. Please try again.');
+        throw new Error('Invalid email or password');
+      }
+
+      // Assuming the server responds with a JSON object containing a token
+      const data = await response.json();
+      console.log('Login successful!', data.token);
+      localStorage.setItem('token', data.token);
+     
+      navigate("/menu");
+      // You can save the token in the state, local storage, or a cookie for further use
+    } catch (error) {
+      console.error('Login error:', error.message);
+    } }
 
 
 
