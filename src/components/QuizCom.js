@@ -144,7 +144,7 @@ const Quiz = ({ quizData , questionId}) => {
     // Redirect to /menu
     // history.push('/menu'); // If you're using useHistory, uncomment this line
 
-    navigate("/rank")
+    navigate("/rank",{state : { quizId : questionId }})
     // Log the quiz duration
     
 

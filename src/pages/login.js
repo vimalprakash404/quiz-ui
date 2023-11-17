@@ -4,18 +4,20 @@ import React, { useState } from 'react';
 import { Container, Card, Form, Button, Alert } from 'react-bootstrap';
 import domain from '../domian';
 import { useNavigate } from 'react-router-dom';
-
+// import GoogleLoginButton from '../components/GoogleLoginButton';
+import GoogleAuth from '../components/GoogleAuth';
+import { GoogleLogin } from '@react-oauth/google';
 const LoginPage = () => {
 
-  
-    
-  
-  
- 
+
+
+
+
+
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
-  const navigate =  useNavigate();
+  const navigate = useNavigate();
   const handleLogin = (e) => {
     e.preventDefault();
 
@@ -26,15 +28,15 @@ const LoginPage = () => {
     }
     console.log(email);
     console.log(password);
-    login_data(email,password)
+    login_data(email, password)
     // Add your login logic here
     // For demo, let's simulate a login error
-   
+
   };
 
-  const login_data = async (email,password) => {
+  const login_data = async (email, password) => {
     try {
-      const demo_ob =domain();
+      const demo_ob = domain();
       const response = await fetch(demo_ob.concat('/login'), {
         method: 'POST',
         headers: {
@@ -44,7 +46,7 @@ const LoginPage = () => {
       });
 
       if (!response.ok) {
-        
+
         setError('Invalid email or password. Please try again.');
         throw new Error('Invalid email or password');
       }
@@ -53,14 +55,26 @@ const LoginPage = () => {
       const data = await response.json();
       console.log('Login successful!', data.token);
       localStorage.setItem('token', data.token);
-     
+
       navigate("/menu");
       // You can save the token in the state, local storage, or a cookie for further use
     } catch (error) {
       console.error('Login error:', error.message);
-    } }
+    }
+  }
 
+  const responseMessage = (response) => {
+    console.log(response);
+    if (response.profileObj) {
+      const userEmail = response.profileObj.email;
+      console.log('User Email:', userEmail);
 
+      // You can perform additional actions with the email, such as sending it to the server.
+    }
+  };
+  const errorMessage = (error) => {
+    console.log(error);
+  };
 
   return (
     <Container className="mt-4 d-flex align-items-center justify-content-center" style={{ minHeight: '100vh' }}>
@@ -92,10 +106,14 @@ const LoginPage = () => {
                 required
               />
             </Form.Group>
-
+            <br/>
             <Button variant="primary" type="submit" block>
               Login
             </Button>
+            <br/>
+            {/* <GoogleLogin onSuccess={responseMessage} onError={errorMessage} cookiePolicy={'single_host_origin'} /> */}
+            {/* <GoogleLoginButton/> */}
+            <GoogleAuth/>
           </Form>
         </Card.Body>
       </Card>
